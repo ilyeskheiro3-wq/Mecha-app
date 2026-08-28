@@ -1,0 +1,90 @@
+═══════════════════════════════════════════════════════════════
+    🚗 MAINTENANCE SCHEDULER - APK BUILD COMMANDS 🚗
+═══════════════════════════════════════════════════════════════
+
+📱 OPTION 1: GITHUB ACTIONS (NO ANDROID STUDIO!)
+────────────────────────────────────────────────────────────
+Command:
+  git init
+  git add .
+  git commit -m "Initial commit"
+  git remote add origin https://github.com/YOUR_USERNAME/maintenance-scheduler.git
+  git push -u origin main
+
+Then:
+  1. Go to GitHub → Actions tab
+  2. Wait 5-10 minutes for build
+  3. Download APK from Releases tab
+  4. Install on phone
+
+✅ No Java needed
+✅ No Android Studio needed
+✅ Builds automatically in cloud
+
+📖 Full guide: GITHUB_BUILD_GUIDE.md
+
+
+📱 OPTION 2: LOCAL GRADLE BUILD (NO ANDROID STUDIO!)
+────────────────────────────────────────────────────────────
+Auto-install Java + Build:
+  .\install-java-and-build.ps1
+
+Manual (if Java already installed):
+  .\build-apk.ps1
+
+Or step-by-step:
+  pnpm build
+  npx cap sync android
+  cd android
+  .\gradlew.bat assembleDebug --no-daemon
+
+APK Location:
+  android\app\build\outputs\apk\debug\app-debug.apk
+
+✅ Only needs Java JDK 17
+✅ No Android Studio required
+✅ Faster builds (3-5 min after first)
+
+📖 Full guide: BUILD_APK_GUIDE.md
+
+
+📱 OPTION 3: PWA (NO BUILD NEEDED!)
+────────────────────────────────────────────────────────────
+Command:
+  pnpm dev
+
+Then on phone:
+  1. Open Chrome
+  2. Go to http://YOUR_PC_IP:3000
+  3. Menu → Add to Home Screen
+  4. Done!
+
+✅ Instant (2 minutes)
+✅ No compilation needed
+❌ Requires PC running
+
+📖 Full guide: QUICK_START.md
+
+
+═══════════════════════════════════════════════════════════════
+🎯 QUICK COMPARISON
+═══════════════════════════════════════════════════════════════
+
+GitHub Actions:  ⭐ Easiest | No setup | 10 min builds
+Local Gradle:    ⚡ Fastest | Java only | 3 min builds
+PWA:            🚀 Instant | No build | PC dependent
+
+═══════════════════════════════════════════════════════════════
+📚 DOCUMENTATION FILES
+═══════════════════════════════════════════════════════════════
+
+BUILD_OPTIONS.md       - Compare all methods
+GITHUB_BUILD_GUIDE.md  - Cloud build setup
+BUILD_APK_GUIDE.md     - Local Gradle build
+QUICK_START.md         - PWA installation
+START_HERE.txt         - Quick overview
+WHATS_INCLUDED.md      - Feature list
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMMENDED: Start with GitHub Actions (easiest!)
+═══════════════════════════════════════════════════════════════

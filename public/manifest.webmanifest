@@ -1,0 +1,18 @@
+{
+  "name": "Vidange Manager",
+  "short_name": "Vidange",
+  "description": "Offline garage manager for oil changes, parts and workers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#3b62c4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
