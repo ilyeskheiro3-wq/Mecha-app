@@ -3,14 +3,12 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.maintenance.scheduler"
     compileSdk = rootProject.ext.compileSdkVersion
-
+    
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-
-    defaultConfig {
-
+    
     defaultConfig {
         applicationId "com.maintenance.scheduler"
         minSdkVersion rootProject.ext.minSdkVersion
