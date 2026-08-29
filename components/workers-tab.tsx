@@ -134,10 +134,21 @@ export function WorkersTab({
                         <p className="truncate text-sm font-medium text-foreground">{l.serviceName}</p>
                         {l.note ? <p className="truncate text-xs text-muted-foreground">{l.note}</p> : null}
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold tabular-nums text-foreground">
                           {formatDA(l.price)}
                         </span>
+                        <button
+                          onClick={() => {
+                            setWorker(name)
+                            setDate(l.date)
+                            setSheetOpen(true)
+                          }}
+                          className="text-primary"
+                          aria-label="Add more services"
+                        >
+                          <Plus className="size-4" />
+                        </button>
                         <button
                           onClick={() => onDeleteLog(l.id)}
                           className="text-muted-foreground"
