@@ -118,8 +118,26 @@ export default function Page() {
     setEditing(null)
   }
 
-  const setApptStatus = (id: string, status: ApptStatus) =>
-    setAppointments((prev) => prev.map((x) => (x.id === id ? { ...x, status } : x)))
+  const setApptStatus = (
+    id: string, 
+    status: ApptStatus, 
+    arrivalTime?: string, 
+    estimatedDuration?: number, 
+    garage?: 1 | 2
+  ) =>
+    setAppointments((prev) => 
+      prev.map((x) => 
+        x.id === id 
+          ? { 
+              ...x, 
+              status, 
+              ...(arrivalTime && { arrivalTime }),
+              ...(estimatedDuration && { estimatedDuration }),
+              ...(garage && { garage })
+            } 
+          : x
+      )
+    )
 
   const reorder = (id: string, dir: -1 | 1) => {
     setAppointments((prev) => {

@@ -157,9 +157,37 @@ export function VehicleSheet({
 
         <div className="rounded-2xl border border-border bg-card p-4">
           <p className="mb-3 text-sm font-bold text-foreground">Oil</p>
+          
+          {/* Oil pricing mode toggle */}
+          <div className="mb-3 flex flex-col gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Pricing mode</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => updateParts({ oilPricingMode: "per5L" })}
+                className={`flex-1 rounded-lg border-2 py-2 text-xs font-semibold transition-colors ${
+                  draft.parts.oilPricingMode === "per5L"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                Per 5L
+              </button>
+              <button
+                onClick={() => updateParts({ oilPricingMode: "per1L" })}
+                className={`flex-1 rounded-lg border-2 py-2 text-xs font-semibold transition-colors ${
+                  draft.parts.oilPricingMode === "per1L"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                Per 1L
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <NumberField
-              label="Price of 5 L"
+              label={draft.parts.oilPricingMode === "per5L" ? "Price of 5 L" : "Price per 1 L"}
               value={draft.parts.oilPricePer5L || ""}
               onChange={(v) => updateParts({ oilPricePer5L: num(v) })}
               placeholder="0"
@@ -174,7 +202,11 @@ export function VehicleSheet({
             />
           </div>
           <div className="mt-2 flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
-            <span className="text-xs text-muted-foreground">Oil cost (price / 5 x liters)</span>
+            <span className="text-xs text-muted-foreground">
+              {draft.parts.oilPricingMode === "per5L" 
+                ? "Oil cost (price / 5 × liters)" 
+                : "Oil cost (price × liters)"}
+            </span>
             <span className="text-sm font-semibold text-foreground">{formatDA(oilCost(draft.parts))}</span>
           </div>
         </div>
@@ -193,6 +225,17 @@ export function VehicleSheet({
               />
             ))}
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="mb-3 text-sm font-bold text-foreground">Main d'oeuvre</p>
+          <NumberField
+            label="Price (type manually)"
+            value={draft.parts.mainDoeuvre || ""}
+            onChange={(v) => updateParts({ mainDoeuvre: num(v) })}
+            placeholder="0"
+            suffix="DA"
+          />
         </div>
 
         <div className="flex items-center justify-between rounded-2xl bg-accent px-4 py-4 text-accent-foreground">

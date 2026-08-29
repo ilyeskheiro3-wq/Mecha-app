@@ -72,11 +72,16 @@ export function ScheduleTab({
   onDateChange: (date: string) => void
   onAdd: () => void
   onOpen: (a: Appointment) => void
-  onSetStatus: (id: string, status: ApptStatus) => void
+  onSetStatus: (id: string, status: ApptStatus, arrivalTime?: string, estimatedDuration?: number, garage?: 1 | 2) => void
   onReorder: (id: string, dir: -1 | 1) => void
   onDelete: (id: string) => void
 }) {
   const [sort, setSort] = useState<SortMode>("manual")
+  const [showArrivalModal, setShowArrivalModal] = useState(false)
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
+  const [arrivalTime, setArrivalTime] = useState("")
+  const [estimatedDuration, setEstimatedDuration] = useState("")
+  const [selectedGarage, setSelectedGarage] = useState<1 | 2>(1)
   const [nowMin, setNowMin] = useState(() => {
     const d = new Date()
     return d.getHours() * 60 + d.getMinutes()
@@ -89,6 +94,34 @@ export function ScheduleTab({
     }, 30000)
     return () => clearInterval(t)
   }, [])
+
+  const isToday = date === todayISO()
+
+  const handleMoveToGarage = (appt: Appointment) => {
+    setSelectedAppt(appt)
+    // Pre-fill with current time
+    const now = new Date()
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    setArrivalTime(currentTime)
+    // Pre-fill with estimated duration based on services
+    setEstimatedDuration(durationOf(appt.services).toString())
+    setSelectedGarage(1)
+    setShowArrivalModal(true)
+  }
+
+  const confirmMoveToGarage = () => {
+    if (selectedAppt && arrivalTime && estimatedDuration) {
+      onSetStatus(
+        selectedAppt.id, 
+        "inside", 
+        arrivalTime, 
+        parseInt(estimatedDuration), 
+        selectedGarage
+      )
+      setShowArrivalModal(false)
+      setSelectedAppt(null)
+    }
+  }
 
   const isToday = date === todayISO()
 
@@ -230,6 +263,9 @@ export function ScheduleTab({
                       {appt.services.length > 0 && !finished ? (
                         <p className="mt-2 text-xs text-muted-foreground">
                           Bay {minutesToTime(startMin)} - {minutesToTime(endMin)} ({durationOf(appt.services)} min)
+                          {appt.garage && appt.status === "inside" ? (
+                            <span className="ml-1 font-semibold text-primary">· Garage {appt.garage}</span>
+                          ) : null}
                           {total > 0 ? (
                             <span className="ml-1 font-semibold text-foreground">· {formatDA(total)}</span>
                           ) : null}
@@ -243,7 +279,7 @@ export function ScheduleTab({
                   <div className="flex w-16 flex-col border-l border-border">
                     {appt.status === "waiting" ? (
                       <button
-                        onClick={() => onSetStatus(appt.id, "inside")}
+                        onClick={() => handleMoveToGarage(appt)}
                         className="flex flex-1 flex-col items-center justify-center gap-0.5 text-primary"
                         aria-label="Mark in the bay"
                       >
@@ -316,6 +352,85 @@ export function ScheduleTab({
           </button>
         </div>
       ) : null}
+
+      {/* Arrival Time Modal */}
+      {showArrivalModal && selectedAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-foreground">Car arrived in garage</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Actual arrival time
+                </label>
+                <input
+                  type="time"
+                  value={arrivalTime}
+                  onChange={(e) => setArrivalTime(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Estimated duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  value={estimatedDuration}
+                  onChange={(e) => setEstimatedDuration(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="30"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Garage bay
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedGarage(1)}
+                    className={`flex-1 rounded-lg border-2 py-3 font-semibold transition-colors ${
+                      selectedGarage === 1
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-foreground"
+                    }`}
+                  >
+                    Garage 1
+                  </button>
+                  <button
+                    onClick={() => setSelectedGarage(2)}
+                    className={`flex-1 rounded-lg border-2 py-3 font-semibold transition-colors ${
+                      selectedGarage === 2
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-foreground"
+                    }`}
+                  >
+                    Garage 2
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowArrivalModal(false)
+                  setSelectedAppt(null)
+                }}
+                className="flex-1 rounded-lg border border-border bg-secondary px-4 py-3 font-semibold text-secondary-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmMoveToGarage}
+                disabled={!arrivalTime || !estimatedDuration}
+                className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
