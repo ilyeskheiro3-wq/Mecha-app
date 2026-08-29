@@ -130,9 +130,9 @@ export function WorkersTab({
                 <ul>
                   {items.map((l) => (
                     <li key={l.id} className="flex items-center justify-between px-4 py-2.5">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{l.serviceName}</p>
-                        {l.note ? <p className="truncate text-xs text-muted-foreground">{l.note}</p> : null}
+                        {l.note && <p className="truncate text-xs text-muted-foreground italic">{l.note}</p>}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold tabular-nums text-foreground">
@@ -142,10 +142,12 @@ export function WorkersTab({
                           onClick={() => {
                             setWorker(name)
                             setDate(l.date)
+                            setNote(l.note || "")
                             setSheetOpen(true)
                           }}
                           className="text-primary"
                           aria-label="Add more services"
+                          title="Add more services for this worker"
                         >
                           <Plus className="size-4" />
                         </button>
@@ -153,6 +155,7 @@ export function WorkersTab({
                           onClick={() => onDeleteLog(l.id)}
                           className="text-muted-foreground"
                           aria-label="Delete job"
+                          title="Delete this job"
                         >
                           <Trash2 className="size-4" />
                         </button>
