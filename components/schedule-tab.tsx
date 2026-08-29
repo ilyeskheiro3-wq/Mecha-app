@@ -123,8 +123,6 @@ export function ScheduleTab({
     }
   }
 
-  const isToday = date === todayISO()
-
   const ordered = useMemo(() => {
     const list = appointments.filter((a) => a.date === date)
     if (sort === "time") {
