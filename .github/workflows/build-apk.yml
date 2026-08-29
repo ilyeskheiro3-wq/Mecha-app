@@ -27,7 +27,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '21'
         
     - name: Install dependencies
       run: pnpm install
@@ -42,7 +42,7 @@ jobs:
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon --init-script init.gradle
+        ./gradlew assembleDebug --no-daemon
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
