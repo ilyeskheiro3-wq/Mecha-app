@@ -340,12 +340,12 @@ export function ScheduleTab({
       )}
 
       {isToday ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30 mx-auto flex max-w-md justify-end px-5">
+        <div className="pointer-events-none fixed inset-x-0 bottom-28 z-30 mx-auto flex max-w-md justify-center px-5">
           <button
             onClick={onAdd}
-            className="pointer-events-auto flex h-14 items-center gap-2 rounded-full bg-primary pl-5 pr-6 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
+            className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
           >
-            <Plus className="size-5" />
+            <Plus className="size-4" />
             <span className="font-semibold">Add car</span>
           </button>
         </div>

@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Trash2, Wrench, Tag } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Trash2, Wrench, Tag } from "lucide-react"
 import { EmptyState, TextField, NumberField } from "@/components/primitives"
-import { Button } from "@/components/ui/button"
 import { type WorkerService, formatDA } from "@/lib/types"
 
 const num = (v: string) => {
@@ -22,12 +21,35 @@ export function SettingsTab({
 }) {
   const [name, setName] = useState("")
   const [price, setPrice] = useState("")
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const submit = () => {
-    if (!name.trim()) return
-    onAdd(name.trim(), num(price))
-    setName("")
-    setPrice("")
+  // Auto-save when both fields have values
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    if (name.trim() && price.trim()) {
+      timeoutRef.current = setTimeout(() => {
+        onAdd(name.trim(), num(price))
+        setName("")
+        setPrice("")
+      }, 1000) // 1 second delay
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [name, price, onAdd])
+
+  const handleNameChange = (newName: string) => {
+    setName(newName)
+  }
+
+  const handlePriceChange = (newPrice: string) => {
+    setPrice(newPrice)
   }
 
   return (
@@ -43,12 +65,11 @@ export function SettingsTab({
           New service
         </p>
         <div className="flex flex-col gap-3">
-          <TextField label="Service name" value={name} onChange={setName} placeholder="Vidange boîte" />
-          <NumberField label="Price" value={price} onChange={setPrice} placeholder="1000" suffix="DA" />
-          <Button onClick={submit} disabled={!name.trim()} className="h-12 rounded-xl text-base font-semibold">
-            <Plus className="size-5" />
-            Add service
-          </Button>
+          <TextField label="Service name" value={name} onChange={handleNameChange} placeholder="Vidange boîte" />
+          <NumberField label="Price" value={price} onChange={handlePriceChange} placeholder="1000" suffix="DA" />
+          <p className="text-xs text-muted-foreground text-center">
+            Service will be auto-saved when you finish typing both name and price
+          </p>
         </div>
       </div>
 

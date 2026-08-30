@@ -187,7 +187,13 @@ export default function Page() {
             onDelete={deleteAppointment}
           />
         ) : tab === "workers" ? (
-          <WorkersTab services={services} logs={logs} onAddLogs={addLogs} onDeleteLog={deleteLog} />
+          <WorkersTab 
+            services={services} 
+            logs={logs} 
+            onAddLogs={addLogs} 
+            onDeleteLog={deleteLog} 
+            onAddService={addService}
+          />
         ) : (
           <SettingsTab services={services} onAdd={addService} onDelete={deleteService} />
         )}

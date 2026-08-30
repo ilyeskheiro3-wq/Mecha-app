@@ -1,10 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Plus, Users, Trash2, CalendarDays, Coins } from "lucide-react"
-import { EmptyState, Sheet, TextField } from "@/components/primitives"
+import { Plus, Users, Trash2, CalendarDays, Coins, Tag } from "lucide-react"
+import { EmptyState, Sheet, TextField, NumberField } from "@/components/primitives"
 import { Button } from "@/components/ui/button"
 import { type WorkerService, type WorkerLog, formatDA } from "@/lib/types"
+
+const num = (v: string) => {
+  const n = Number.parseFloat(v.replace(",", "."))
+  return Number.isNaN(n) ? 0 : n
+}
 
 function todayISO() {
   const d = new Date()
@@ -16,17 +21,24 @@ export function WorkersTab({
   logs,
   onAddLogs,
   onDeleteLog,
+  onAddService,
 }: {
   services: WorkerService[]
   logs: WorkerLog[]
   onAddLogs: (entries: WorkerLog[]) => void
   onDeleteLog: (id: string) => void
+  onAddService?: (name: string, price: number) => void // Optional for creating services
 }) {
   const [date, setDate] = useState(todayISO())
   const [sheetOpen, setSheetOpen] = useState(false)
   const [worker, setWorker] = useState("")
   const [note, setNote] = useState("")
   const [picked, setPicked] = useState<string[]>([]) // service ids (multiple allowed, repeats ok)
+  
+  // New service creation
+  const [showNewService, setShowNewService] = useState(false)
+  const [newServiceName, setNewServiceName] = useState("")
+  const [newServicePrice, setNewServicePrice] = useState("")
 
   const dayLogs = useMemo(() => logs.filter((l) => l.date === date), [logs, date])
 
@@ -51,6 +63,17 @@ export function WorkersTab({
     setWorker("")
     setNote("")
     setPicked([])
+    setShowNewService(false)
+    setNewServiceName("")
+    setNewServicePrice("")
+  }
+
+  const createNewService = () => {
+    if (!newServiceName.trim() || !newServicePrice.trim() || !onAddService) return
+    onAddService(newServiceName.trim(), num(newServicePrice))
+    setNewServiceName("")
+    setNewServicePrice("")
+    setShowNewService(false)
   }
 
   const save = () => {
@@ -169,15 +192,15 @@ export function WorkersTab({
         </div>
       )}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30 mx-auto flex max-w-md justify-end px-5">
+      <div className="pointer-events-none fixed inset-x-0 bottom-28 z-30 mx-auto flex max-w-md justify-center px-5">
         <button
           onClick={() => {
             resetSheet()
             setSheetOpen(true)
           }}
-          className="pointer-events-auto flex h-14 items-center gap-2 rounded-full bg-primary pl-5 pr-6 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
+          className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
         >
-          <Plus className="size-5" />
+          <Plus className="size-4" />
           <span className="font-semibold">Add job</span>
         </button>
       </div>
@@ -207,12 +230,59 @@ export function WorkersTab({
           <TextField label="Note (optional)" value={note} onChange={setNote} placeholder="Golf 7 - client Ali" />
 
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              Tap the services done (tap again to add more)
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">
+                Tap the services done (tap again to add more)
+              </span>
+              {onAddService && (
+                <button
+                  onClick={() => setShowNewService(!showNewService)}
+                  className="text-xs font-semibold text-primary"
+                >
+                  {showNewService ? "Cancel" : "+ New service"}
+                </button>
+              )}
+            </div>
+            
+            {showNewService && onAddService && (
+              <div className="mb-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="size-4 text-primary" />
+                  <span className="text-sm font-semibold text-primary">Create new service</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <TextField 
+                    label="Service name" 
+                    value={newServiceName} 
+                    onChange={setNewServiceName} 
+                    placeholder="Vidange boîte" 
+                  />
+                  <div className="flex gap-2">
+                    <NumberField 
+                      label="Price" 
+                      value={newServicePrice} 
+                      onChange={setNewServicePrice} 
+                      placeholder="1000" 
+                      suffix="DA"
+                    />
+                    <Button
+                      onClick={createNewService}
+                      disabled={!newServiceName.trim() || !newServicePrice.trim()}
+                      className="h-12 rounded-xl px-4"
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {services.length === 0 ? (
               <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                No services yet. Add them in the Settings tab first.
+                {onAddService 
+                  ? "No services yet. Create one above or add them in the Settings tab." 
+                  : "No services yet. Add them in the Settings tab first."
+                }
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-2.5">
