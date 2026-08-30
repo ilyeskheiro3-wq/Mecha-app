@@ -66,6 +66,7 @@ export function ScheduleTab({
   onSetStatus,
   onReorder,
   onDelete,
+  onAddToWorkerJob,
 }: {
   appointments: Appointment[]
   date: string
@@ -75,6 +76,7 @@ export function ScheduleTab({
   onSetStatus: (id: string, status: ApptStatus, arrivalTime?: string, estimatedDuration?: number, garage?: 1 | 2) => void
   onReorder: (id: string, dir: -1 | 1) => void
   onDelete: (id: string) => void
+  onAddToWorkerJob?: (appt: Appointment, workerName: string) => void
 }) {
   const [sort, setSort] = useState<SortMode>("manual")
   const [showArrivalModal, setShowArrivalModal] = useState(false)
@@ -82,6 +84,13 @@ export function ScheduleTab({
   const [arrivalTime, setArrivalTime] = useState("")
   const [estimatedDuration, setEstimatedDuration] = useState("")
   const [selectedGarage, setSelectedGarage] = useState<1 | 2>(1)
+  
+  // Long-press to add to worker job
+  const [showWorkerModal, setShowWorkerModal] = useState(false)
+  const [workerJobAppt, setWorkerJobAppt] = useState<Appointment | null>(null)
+  const [workerName, setWorkerName] = useState("")
+  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null)
+  
   const [nowMin, setNowMin] = useState(() => {
     const d = new Date()
     return d.getHours() * 60 + d.getMinutes()
@@ -120,6 +129,32 @@ export function ScheduleTab({
       )
       setShowArrivalModal(false)
       setSelectedAppt(null)
+    }
+  }
+
+  const handleLongPressStart = (appt: Appointment) => {
+    if (!onAddToWorkerJob) return
+    const timer = setTimeout(() => {
+      setWorkerJobAppt(appt)
+      setWorkerName("")
+      setShowWorkerModal(true)
+    }, 500) // 500ms long press
+    setPressTimer(timer)
+  }
+
+  const handleLongPressEnd = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer)
+      setPressTimer(null)
+    }
+  }
+
+  const confirmAddToWorkerJob = () => {
+    if (workerJobAppt && workerName.trim() && onAddToWorkerJob) {
+      onAddToWorkerJob(workerJobAppt, workerName.trim())
+      setShowWorkerModal(false)
+      setWorkerJobAppt(null)
+      setWorkerName("")
     }
   }
 
@@ -186,6 +221,16 @@ export function ScheduleTab({
         ) : null}
       </div>
 
+      {isToday && (
+        <button
+          onClick={onAdd}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
+        >
+          <Plus className="size-5" />
+          <span className="font-semibold">Add car</span>
+        </button>
+      )}
+
       {scheduled.length === 0 ? (
         <EmptyState
           icon={<Clock className="size-6" />}
@@ -222,7 +267,15 @@ export function ScheduleTab({
                 }`}
               >
                 <div className="flex">
-                  <button onClick={() => onOpen(appt)} className="flex flex-1 items-start gap-3 p-4 text-left">
+                  <button 
+                    onClick={() => onOpen(appt)} 
+                    onMouseDown={() => handleLongPressStart(appt)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
+                    onTouchStart={() => handleLongPressStart(appt)}
+                    onTouchEnd={handleLongPressEnd}
+                    className="flex flex-1 items-start gap-3 p-4 text-left"
+                  >
                     <div className="flex flex-col items-center">
                       <span className="text-lg font-extrabold tabular-nums leading-none text-foreground">
                         {appt.time || "--:--"}
@@ -339,18 +392,6 @@ export function ScheduleTab({
         </ul>
       )}
 
-      {isToday ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-28 z-30 mx-auto flex max-w-md justify-center px-5">
-          <button
-            onClick={onAdd}
-            className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
-          >
-            <Plus className="size-4" />
-            <span className="font-semibold">Add car</span>
-          </button>
-        </div>
-      ) : null}
-
       {/* Arrival Time Modal */}
       {showArrivalModal && selectedAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -424,6 +465,58 @@ export function ScheduleTab({
                 className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50"
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Worker Job Modal */}
+      {showWorkerModal && workerJobAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-foreground">Add to worker job</h3>
+            <div className="mb-4 rounded-lg bg-secondary p-3">
+              <p className="text-sm text-muted-foreground">Car</p>
+              <p className="font-semibold text-foreground">
+                {workerJobAppt.vehicle || workerJobAppt.plate || "Vehicle"}
+              </p>
+              {workerJobAppt.vehicle && workerJobAppt.plate && (
+                <p className="text-xs text-muted-foreground">{workerJobAppt.plate}</p>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Worker name
+                </label>
+                <input
+                  type="text"
+                  value={workerName}
+                  onChange={(e) => setWorkerName(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="Karim"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowWorkerModal(false)
+                  setWorkerJobAppt(null)
+                  setWorkerName("")
+                }}
+                className="flex-1 rounded-lg border border-border bg-secondary px-4 py-3 font-semibold text-secondary-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmAddToWorkerJob}
+                disabled={!workerName.trim()}
+                className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                Add job
               </button>
             </div>
           </div>

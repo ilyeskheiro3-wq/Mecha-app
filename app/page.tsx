@@ -161,10 +161,33 @@ export default function Page() {
   const addService = (name: string, price: number) =>
     setServices((prev) => [...prev, { id: uid(), name, price }])
   const deleteService = (id: string) => setServices((prev) => prev.filter((s) => s.id !== id))
+  const editService = (id: string, name: string, price: number) =>
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, name, price } : s)))
 
   // ---- log actions ----
   const addLogs = (entries: WorkerLog[]) => setLogs((prev) => [...entries, ...prev])
   const deleteLog = (id: string) => setLogs((prev) => prev.filter((l) => l.id !== id))
+
+  // ---- add appointment to worker job ----
+  const addAppointmentToWorkerJob = (appt: Appointment, workerName: string) => {
+    // Create logs for each service in the appointment
+    const entries: WorkerLog[] = appt.services.map((serviceKind, i) => {
+      // Try to find matching service in services list
+      const serviceName = serviceKind === "moteur" ? "Vidange Moteur" : "Vidange Boîte"
+      const matchingService = services.find(s => s.name.toLowerCase().includes(serviceKind))
+      
+      return {
+        id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        worker: workerName,
+        date: appt.date,
+        serviceId: matchingService?.id || uid(),
+        serviceName: matchingService?.name || serviceName,
+        price: matchingService?.price || 0,
+        note: `${appt.vehicle || appt.plate || "Vehicle"}${appt.plate && appt.vehicle ? ` - ${appt.plate}` : ""}`,
+      }
+    })
+    addLogs(entries)
+  }
 
   const tabs: { key: Tab; label: string; icon: typeof Users }[] = [
     { key: "schedule", label: "Schedule", icon: CalendarClock },
@@ -185,6 +208,7 @@ export default function Page() {
             onSetStatus={setApptStatus}
             onReorder={reorder}
             onDelete={deleteAppointment}
+            onAddToWorkerJob={addAppointmentToWorkerJob}
           />
         ) : tab === "workers" ? (
           <WorkersTab 
@@ -193,9 +217,10 @@ export default function Page() {
             onAddLogs={addLogs} 
             onDeleteLog={deleteLog} 
             onAddService={addService}
+            onEditService={editService}
           />
         ) : (
-          <SettingsTab services={services} onAdd={addService} onDelete={deleteService} />
+          <SettingsTab services={services} onAdd={addService} onDelete={deleteService} onEdit={editService} />
         )}
       </div>
 

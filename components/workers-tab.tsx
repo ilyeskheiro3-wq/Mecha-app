@@ -22,12 +22,14 @@ export function WorkersTab({
   onAddLogs,
   onDeleteLog,
   onAddService,
+  onEditService,
 }: {
   services: WorkerService[]
   logs: WorkerLog[]
   onAddLogs: (entries: WorkerLog[]) => void
   onDeleteLog: (id: string) => void
   onAddService?: (name: string, price: number) => void // Optional for creating services
+  onEditService?: (id: string, name: string, price: number) => void // Optional for editing services
 }) {
   const [date, setDate] = useState(todayISO())
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -39,6 +41,11 @@ export function WorkersTab({
   const [showNewService, setShowNewService] = useState(false)
   const [newServiceName, setNewServiceName] = useState("")
   const [newServicePrice, setNewServicePrice] = useState("")
+  
+  // Service editing
+  const [editingService, setEditingService] = useState<WorkerService | null>(null)
+  const [editServiceName, setEditServiceName] = useState("")
+  const [editServicePrice, setEditServicePrice] = useState("")
 
   const dayLogs = useMemo(() => logs.filter((l) => l.date === date), [logs, date])
 
@@ -66,6 +73,9 @@ export function WorkersTab({
     setShowNewService(false)
     setNewServiceName("")
     setNewServicePrice("")
+    setEditingService(null)
+    setEditServiceName("")
+    setEditServicePrice("")
   }
 
   const createNewService = () => {
@@ -74,6 +84,20 @@ export function WorkersTab({
     setNewServiceName("")
     setNewServicePrice("")
     setShowNewService(false)
+  }
+
+  const startEditService = (service: WorkerService) => {
+    setEditingService(service)
+    setEditServiceName(service.name)
+    setEditServicePrice(service.price.toString())
+  }
+
+  const saveEditService = () => {
+    if (!editingService || !editServiceName.trim() || !editServicePrice.trim() || !onEditService) return
+    onEditService(editingService.id, editServiceName.trim(), num(editServicePrice))
+    setEditingService(null)
+    setEditServiceName("")
+    setEditServicePrice("")
   }
 
   const save = () => {
@@ -134,6 +158,17 @@ export function WorkersTab({
         <span className="text-2xl font-extrabold tabular-nums">{formatDA(dayTotal)}</span>
       </div>
 
+      <button
+        onClick={() => {
+          resetSheet()
+          setSheetOpen(true)
+        }}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
+      >
+        <Plus className="size-5" />
+        <span className="font-semibold">Add job</span>
+      </button>
+
       {byWorker.length === 0 ? (
         <EmptyState
           icon={<Users className="size-6" />}
@@ -191,19 +226,6 @@ export function WorkersTab({
           })}
         </div>
       )}
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-28 z-30 mx-auto flex max-w-md justify-center px-5">
-        <button
-          onClick={() => {
-            resetSheet()
-            setSheetOpen(true)
-          }}
-          className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
-        >
-          <Plus className="size-4" />
-          <span className="font-semibold">Add job</span>
-        </button>
-      </div>
 
       <Sheet
         open={sheetOpen}
@@ -288,10 +310,63 @@ export function WorkersTab({
               <div className="grid grid-cols-2 gap-2.5">
                 {services.map((s) => {
                   const count = countFor(s.id)
+                  const isEditing = editingService?.id === s.id
+                  
+                  if (isEditing) {
+                    return (
+                      <div key={s.id} className="col-span-2 rounded-xl border-2 border-primary bg-primary/5 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Tag className="size-4 text-primary" />
+                          <span className="text-sm font-semibold text-primary">Edit service</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <TextField 
+                            label="Service name" 
+                            value={editServiceName} 
+                            onChange={setEditServiceName} 
+                            placeholder="Vidange boîte" 
+                          />
+                          <div className="flex gap-2">
+                            <NumberField 
+                              label="Price" 
+                              value={editServicePrice} 
+                              onChange={setEditServicePrice} 
+                              placeholder="1000" 
+                              suffix="DA"
+                            />
+                            <Button
+                              onClick={saveEditService}
+                              disabled={!editServiceName.trim() || !editServicePrice.trim()}
+                              className="h-12 rounded-xl px-4"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setEditingService(null)
+                                setEditServiceName("")
+                                setEditServicePrice("")
+                              }}
+                              className="h-12 rounded-xl px-4 bg-secondary text-secondary-foreground"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  
                   return (
                     <button
                       key={s.id}
                       onClick={() => togglePick(s.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+                        if (onEditService) {
+                          startEditService(s)
+                        }
+                      }}
                       className={`relative flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors ${
                         count > 0 ? "border-primary bg-primary/10" : "border-border bg-card"
                       }`}
@@ -303,6 +378,9 @@ export function WorkersTab({
                       ) : null}
                       <span className="pr-6 text-sm font-semibold text-foreground">{s.name}</span>
                       <span className="text-xs font-medium text-primary">{formatDA(s.price)}</span>
+                      {onEditService && (
+                        <span className="text-[9px] text-muted-foreground">Hold to edit</span>
+                      )}
                     </button>
                   )
                 })}
