@@ -186,7 +186,26 @@ export default function Page() {
         note: `${appt.vehicle || appt.plate || "Vehicle"}${appt.plate && appt.vehicle ? ` - ${appt.plate}` : ""}`,
       }
     })
+    
+    // Add main d'oeuvre if it has a price
+    if (appt.parts.mainDoeuvre > 0) {
+      entries.push({
+        id: `${Date.now()}-md-${Math.random().toString(36).slice(2, 7)}`,
+        worker: workerName,
+        date: appt.date,
+        serviceId: "main-doeuvre",
+        serviceName: "Main d'oeuvre",
+        price: appt.parts.mainDoeuvre,
+        note: `${appt.vehicle || appt.plate || "Vehicle"}${appt.plate && appt.vehicle ? ` - ${appt.plate}` : ""}`,
+      })
+    }
+    
     addLogs(entries)
+  }
+
+  // ---- edit log ----
+  const editLog = (id: string, updates: Partial<WorkerLog>) => {
+    setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, ...updates } : l)))
   }
 
   const tabs: { key: Tab; label: string; icon: typeof Users }[] = [
@@ -218,6 +237,7 @@ export default function Page() {
             onDeleteLog={deleteLog} 
             onAddService={addService}
             onEditService={editService}
+            onEditLog={editLog}
           />
         ) : (
           <SettingsTab services={services} onAdd={addService} onDelete={deleteService} onEdit={editService} />

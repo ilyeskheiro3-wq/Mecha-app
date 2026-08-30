@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Plus, Users, Trash2, CalendarDays, Coins, Tag } from "lucide-react"
+import { Plus, Users, Trash2, CalendarDays, Coins, Tag, Edit } from "lucide-react"
 import { EmptyState, Sheet, TextField, NumberField } from "@/components/primitives"
 import { Button } from "@/components/ui/button"
 import { type WorkerService, type WorkerLog, formatDA } from "@/lib/types"
@@ -23,6 +23,7 @@ export function WorkersTab({
   onDeleteLog,
   onAddService,
   onEditService,
+  onEditLog,
 }: {
   services: WorkerService[]
   logs: WorkerLog[]
@@ -30,6 +31,7 @@ export function WorkersTab({
   onDeleteLog: (id: string) => void
   onAddService?: (name: string, price: number) => void // Optional for creating services
   onEditService?: (id: string, name: string, price: number) => void // Optional for editing services
+  onEditLog?: (id: string, updates: Partial<WorkerLog>) => void // Optional for editing logs
 }) {
   const [date, setDate] = useState(todayISO())
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -46,6 +48,14 @@ export function WorkersTab({
   const [editingService, setEditingService] = useState<WorkerService | null>(null)
   const [editServiceName, setEditServiceName] = useState("")
   const [editServicePrice, setEditServicePrice] = useState("")
+  
+  // Job editing
+  const [editingLog, setEditingLog] = useState<WorkerLog | null>(null)
+  const [editLogWorker, setEditLogWorker] = useState("")
+  const [editLogService, setEditLogService] = useState("")
+  const [editLogPrice, setEditLogPrice] = useState("")
+  const [editLogNote, setEditLogNote] = useState("")
+  const [showEditLogModal, setShowEditLogModal] = useState(false)
 
   const dayLogs = useMemo(() => logs.filter((l) => l.date === date), [logs, date])
 
@@ -98,6 +108,31 @@ export function WorkersTab({
     setEditingService(null)
     setEditServiceName("")
     setEditServicePrice("")
+  }
+
+  const startEditLog = (log: WorkerLog) => {
+    setEditingLog(log)
+    setEditLogWorker(log.worker)
+    setEditLogService(log.serviceName)
+    setEditLogPrice(log.price.toString())
+    setEditLogNote(log.note)
+    setShowEditLogModal(true)
+  }
+
+  const saveEditLog = () => {
+    if (!editingLog || !editLogWorker.trim() || !editLogService.trim() || !editLogPrice.trim() || !onEditLog) return
+    onEditLog(editingLog.id, {
+      worker: editLogWorker.trim(),
+      serviceName: editLogService.trim(),
+      price: num(editLogPrice),
+      note: editLogNote.trim(),
+    })
+    setShowEditLogModal(false)
+    setEditingLog(null)
+    setEditLogWorker("")
+    setEditLogService("")
+    setEditLogPrice("")
+    setEditLogNote("")
   }
 
   const save = () => {
@@ -196,6 +231,16 @@ export function WorkersTab({
                         <span className="text-sm font-semibold tabular-nums text-foreground">
                           {formatDA(l.price)}
                         </span>
+                        {onEditLog && (
+                          <button
+                            onClick={() => startEditLog(l)}
+                            className="text-primary"
+                            aria-label="Edit job"
+                            title="Edit this job"
+                          >
+                            <Edit className="size-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setWorker(name)
@@ -389,6 +434,87 @@ export function WorkersTab({
           </div>
         </div>
       </Sheet>
+
+      {/* Edit Job Modal */}
+      {showEditLogModal && editingLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-foreground">Edit Job</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Worker name
+                </label>
+                <input
+                  type="text"
+                  value={editLogWorker}
+                  onChange={(e) => setEditLogWorker(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="Karim"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Service name
+                </label>
+                <input
+                  type="text"
+                  value={editLogService}
+                  onChange={(e) => setEditLogService(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="Vidange moteur"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Price (DA)
+                </label>
+                <input
+                  type="number"
+                  value={editLogPrice}
+                  onChange={(e) => setEditLogPrice(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="1000"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Note (optional)
+                </label>
+                <input
+                  type="text"
+                  value={editLogNote}
+                  onChange={(e) => setEditLogNote(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground"
+                  placeholder="Golf 7 - client Ali"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowEditLogModal(false)
+                  setEditingLog(null)
+                  setEditLogWorker("")
+                  setEditLogService("")
+                  setEditLogPrice("")
+                  setEditLogNote("")
+                }}
+                className="flex-1 rounded-lg border border-border bg-secondary px-4 py-3 font-semibold text-secondary-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEditLog}
+                disabled={!editLogWorker.trim() || !editLogService.trim() || !editLogPrice.trim()}
+                className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
